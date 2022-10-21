@@ -9,7 +9,7 @@ namespace FastFoodSimulator.Services
         public static ServerService _serverService;
 
         private  const int timeOrder = 1500;
-        private const int timeServe = 1000;
+        private const int timeServe = 2000;
 
         static ManagerService()
         {
@@ -71,6 +71,13 @@ namespace FastFoodSimulator.Services
             taskCreateOrder.Start();
             taskPreparationFood.Start();
             taskServerCustomer.Start();
+        }
+
+        public void ResetManager()
+        {
+            _kitchenService = new KitchenService();
+            _serverService = new ServerService();
+            _orderTakerService = new OrderTakerService();
         }
     }
 }

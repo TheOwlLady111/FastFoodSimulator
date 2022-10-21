@@ -5,7 +5,7 @@ namespace FastFoodSimulator.Services
 {
     public class OrderTakerService
     {
-        public delegate void CustomersChangeHandler(int amount);
+        public delegate void CustomersChangeHandler(ConcurrentQueue<Customer> customers);
 
         public delegate void OrderTakenHandler(int orderNumber);
 
@@ -52,9 +52,10 @@ namespace FastFoodSimulator.Services
         {
             OnOrderTake?.Invoke(orderNumber);
         }
+
         private void InvokeOnCustomersChange()
         {
-            OnCustomersChange?.Invoke(_customers.Count);
+            OnCustomersChange?.Invoke(_customers);
         }
     }
 }

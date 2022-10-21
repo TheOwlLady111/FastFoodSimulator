@@ -4,74 +4,39 @@ namespace FastFoodSimulator
 {
     public partial class Form1 : Form
     {
-        int _customerArrivelTime;
-        int _orderFullfilmentTime;
+        private int _customerArrivelTime;
+        private int _orderFullfilmentTime;
 
-        ManagerService _managerService;
+        private ManagerService _managerService;
+        private CancellationTokenSource _cancellationTokenSource;
+        private CancellationToken _token;
+
         public Form1()
         {
             InitializeComponent();
 
             _managerService = new ManagerService();
-        }
-
-        private void ShowWarningMessage(string message, TextBox input)
-        { 
-            input.ForeColor = Color.Red;
-            input.Focus();
-            MessageBox.Show(message);
-        }
-
-        private string ValidateTimeInterval(int time)
-        {
-            if(time < 0)
-            {
-                return "Interval can't be less than 0.";
-            }
-            else
-            {
-                if (time > 10)
-                {
-                    return "Interval can't be greater than 10.";
-                }
-            }
-
-            return "";
-        }
-
-        private bool ValidateInput(TextBox input)
-        {
-            if (input.Text == String.Empty)
-            {
-                ShowWarningMessage("Field is required.", input);
-                return false;
-            }
-            else
-            {
-                int time = Convert.ToInt32(input.Text);
-                var message = ValidateTimeInterval(time);
-                if (message != String.Empty)
-                {
-                    ShowWarningMessage(message, input);
-                    return false;
-                }
-            }
-
-            return true;
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         private void StartSimulation()
         {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            CancellationToken token = cancellationTokenSource.Token;
+            _cancellationTokenSource = new CancellationTokenSource();
+            _token = _cancellationTokenSource.Token;
 
-            _managerService.StartManage(token, _customerArrivelTime, _orderFullfilmentTime);
+            _managerService.StartManage(_token, _customerArrivelTime, _orderFullfilmentTime);
 
-            ManagerService._orderTakerService.OnCustomersChange += (count) =>
+            ManagerService._orderTakerService.OnCustomersChange += (customers) =>
             {
                 customersNumberOTSTextBox.Invoke(() =>
                 {
-                    customersNumberOTSTextBox.Text = count.ToString();
+                    customersNumberOTSTextBox.Text = customers.Count.ToString();
+                });
+
+                orderTakerListBox.Invoke(() =>
+                {
+                    orderTakerListBox.DataSource = customers.ToList();
+                    orderTakerListBox.DisplayMember = "Id";
                 });
             };
 
@@ -91,15 +56,49 @@ namespace FastFoodSimulator
                 });
             };
 
+            ManagerService._kitchenService.OnChangeOrder += (b) =>
+            {
+                wOrdersNumberKSTextBox.Invoke(() =>
+                {
+                    wOrdersNumberKSTextBox.Text = b.Count.ToString();
+                });
 
+                wOrdersKSListBox.Invoke(() =>
+                {
+                    wOrdersKSListBox.DataSource = b.ToList();
+                    wOrdersKSListBox.DisplayMember = "Id";
+                });
+            };
+
+            ManagerService._serverService.OnPreparedOrderTake += (number) =>
+            {
+                orderSSTextBox.Invoke(() =>
+                {
+                    orderSSTextBox.Text = number.ToString();
+                });
+            };
+
+            ManagerService._serverService.OnServedCustomersChange += (customers) =>
+            {
+                customersNumberSSTextBox.Invoke(() =>
+                {
+                    customersNumberSSTextBox.Text = customers.Count.ToString();
+                });
+
+                serverListBox.Invoke(() =>
+                {
+                    serverListBox.DataSource = customers.ToList();
+                    serverListBox.DisplayMember = "Id";
+                });
+            };
         }
 
         private void startButton_Click(object sender, EventArgs e)
         {
-            bool isCustomerTimeValid = ValidateInput(customerArrivelTextBox);
-            bool isOrderPreparationTimeValid = ValidateInput(orderPreparationTimeTextBox);
+            bool isCustomerTimeValid = Validation.Validation.ValidateInput(customerArrivelTextBox);
+            bool isOrderPreparationTimeValid = Validation.Validation.ValidateInput(orderPreparationTimeTextBox);
 
-           if(isCustomerTimeValid && isOrderPreparationTimeValid)
+            if (isCustomerTimeValid && isOrderPreparationTimeValid)
             {
                 _customerArrivelTime = Convert.ToInt32(customerArrivelTextBox.Text);
                 _orderFullfilmentTime = Convert.ToInt32(orderPreparationTimeTextBox.Text);
@@ -109,6 +108,23 @@ namespace FastFoodSimulator
 
                 StartSimulation();
             }
+        }
+
+        private void stopButton_Click(object sender, EventArgs e)
+        {
+            _cancellationTokenSource.Cancel();
+            //_managerService.ResetManager();
+
+            //wOrdersNumberKSTextBox.Text = String.Empty;
+            //customersNumberOTSTextBox.Text = String.Empty;
+            //orderTakerListBox.DataSource = null;
+            //orderNumberOTSTextBox.Text = String.Empty;
+            //pOrderNumberKSTextBox.Text = String.Empty;
+            //wOrdersKSListBox.DataSource = null;
+            //orderSSTextBox.Text = String.Empty;
+            //customersNumberSSTextBox.Text = String.Empty;
+            //serverListBox.DataSource = null;
+
         }
     }
 }

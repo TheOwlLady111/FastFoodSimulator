@@ -5,8 +5,17 @@ namespace FastFoodSimulator.Services
 {
     public class ServerService
     {
+        public delegate void ServedCustomersChangeHandler(ConcurrentQueue<Customer> customers);
+
+        public delegate void PreparedOrderHandler(int ordersNumber);
+
+        public event ServedCustomersChangeHandler? OnServedCustomersChange;
+
+        public event PreparedOrderHandler? OnPreparedOrderTake;
+
         private ConcurrentQueue<Customer> _customers;
         private ConcurrentQueue<Order> _preparedOrders;
+
         public ConcurrentQueue<Customer> Customers => _customers;
 
         public ServerService()
@@ -20,6 +29,8 @@ namespace FastFoodSimulator.Services
             ArgumentNullException.ThrowIfNull(customer);
 
             _customers.Enqueue(customer);
+
+            InvokeOnServedCustomersChange();
         }
 
         public void AddOrder(Order order)
@@ -32,7 +43,25 @@ namespace FastFoodSimulator.Services
         public void ServeCustomer()
         {
             _customers.TryDequeue(out _);
-            _preparedOrders.TryDequeue(out _);
+
+            Order order;
+            _preparedOrders.TryDequeue(out order);
+
+            if (order != null)
+            {
+                InvokeOnServedCustomersChange();
+                InvokeOnPreparedOrderTake(order.Id);
+            }
+        }
+
+        private void InvokeOnPreparedOrderTake(int orderNumber)
+        {
+            OnPreparedOrderTake?.Invoke(orderNumber);
+        }
+
+        private void InvokeOnServedCustomersChange()
+        {
+            OnServedCustomersChange?.Invoke(_customers);
         }
     }
 }
