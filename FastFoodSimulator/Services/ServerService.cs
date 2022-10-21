@@ -12,6 +12,7 @@ namespace FastFoodSimulator.Services
         public ServerService()
         {
             _customers = new ConcurrentQueue<Customer>();
+            _preparedOrders = new ConcurrentQueue<Order>();
         }
 
         public void AddCustomer(Customer customer)

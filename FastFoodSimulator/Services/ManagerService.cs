@@ -4,9 +4,12 @@ namespace FastFoodSimulator.Services
 {
     public class ManagerService
     {
-        private static OrderTakerService _orderTakerService;
-        private static KitchenService _kitchenService;
-        private static ServerService _serverService;
+        public static OrderTakerService _orderTakerService;
+        public static KitchenService _kitchenService;
+        public static ServerService _serverService;
+
+        private  const int timeOrder = 1500;
+        private const int timeServe = 1000;
 
         static ManagerService()
         {
@@ -15,8 +18,11 @@ namespace FastFoodSimulator.Services
             _orderTakerService = new OrderTakerService();
         }
 
-        public void StartManage(CancellationToken token, int timeUser, int timeOrder, int timeFood, int timeServe)
+        public void StartManage(CancellationToken token, int timeUser, int timeFood)
         {
+            timeUser *= 1000;
+            timeFood *= 1000;
+
             var taskGenerateCustomer= new Task(() =>
             {
                 while (!token.IsCancellationRequested)
@@ -33,10 +39,12 @@ namespace FastFoodSimulator.Services
                 {
                     var customer = _orderTakerService.TakeOrderFromCustomer();
 
-                    Thread.Sleep(timeOrder);
-
-                    _kitchenService.AddOrder(customer.CustomerOrder);
-                    _serverService.AddCustomer(customer);
+                    if(customer != null)
+                    {
+                        Thread.Sleep(timeOrder);
+                        _kitchenService.AddOrder(customer.CustomerOrder);
+                        _serverService.AddCustomer(customer);
+                    }
                 }
             });
 

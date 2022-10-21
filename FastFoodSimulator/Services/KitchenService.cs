@@ -5,6 +5,10 @@ namespace FastFoodSimulator.Services
 {
     public class KitchenService
     {
+        public delegate void PrepareOrderHandler(int orderNumber);
+
+        public event PrepareOrderHandler? OnPrepareOrder;
+
         private ConcurrentQueue<Order> _orders;
         public ConcurrentQueue<Order> Orders => _orders;
 
@@ -18,6 +22,8 @@ namespace FastFoodSimulator.Services
             ArgumentNullException.ThrowIfNull(order);
 
             _orders.Enqueue(order);
+
+            InvokeOnPrepareOrder(order.Receipt);
         }
 
         public Order DeleteOrder()
@@ -27,6 +33,9 @@ namespace FastFoodSimulator.Services
             return order;
         }
 
-
+        private void InvokeOnPrepareOrder(int orderNumber)
+        {
+            OnPrepareOrder?.Invoke(orderNumber);
+        }
     }
 }
